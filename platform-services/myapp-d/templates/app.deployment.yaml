@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: myapp-d
+  name: myapp-d
+  namespace: myapp
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: myapp-d
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: sidecar
+        image: nginx:1.17.0-alpine
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args: ["envsubst '\\$SERVICE_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+        lifecycle:
+          preStop:
+            exec:
+              # https://github.com/kubernetes/ingress-nginx/issues/3639
+              command: ["/bin/sh", "-c", "sleep 3 && /usr/sbin/nginx -s quit"]
+        env:
+        - name: SERVICE_PORT
+          value: "8080"
+        ports:
+        - containerPort: 443
+          name: default
+        volumeMounts:
+        - name: internal-sidecar-cert-key-secret
+          mountPath: "/app/cert"
+          readOnly: true
+        - mountPath: /etc/nginx/nginx.conf.template
+          name: shared-configmap
+          subPath: nginx.conf.template
+      - name: myapp-d
+        image: "tomcat:8.5-jre8"
+        lifecycle:
+          preStop:
+            exec:
+              # https://github.com/kubernetes/ingress-nginx/issues/3639
+              command: ["/bin/bash", "-c", "sleep 3 && catalina.sh stop"]
+        env:
+        - name: JAVA_OPTS
+          value: "-Xmx64m"
+        ports:
+        - containerPort: 8080
+          name: default
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 115
+          timeoutSeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 120
+          timeoutSeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: internal-sidecar-cert-key-secret
+        secret:
+          secretName: internal-tls-secret
+      - name: shared-configmap
+        configMap:
+          name: shared-config

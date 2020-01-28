@@ -1,0 +1,43 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: myapp-subdomain-{{ .Values.tenant }}
+  labels:
+    name: myapp-subdomain-{{ .Values.tenant }}
+    tenant: "{{ .Values.tenant }}"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: myapp
+  namespace: myapp-subdomain-{{ .Values.tenant }}
+spec:
+  type: ExternalName
+  externalName: myapp.myapp.svc.cluster.local
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: myapp-b
+  namespace: myapp-subdomain-{{ .Values.tenant }}
+spec:
+  type: ExternalName
+  externalName: myapp-b.myapp.svc.cluster.local
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: myapp-c
+  namespace: myapp-subdomain-{{ .Values.tenant }}
+spec:
+  type: ExternalName
+  externalName: myapp-c.myapp.svc.cluster.local
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: myapp-d
+  namespace: myapp-subdomain-{{ .Values.tenant }}
+spec:
+  type: ExternalName
+  externalName: myapp-d.myapp.svc.cluster.local

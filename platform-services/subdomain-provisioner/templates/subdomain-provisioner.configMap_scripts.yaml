@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subdomain-provisioner-config-scripts
+  namespace: myapp
+data:
+  {{- (.Files.Glob "files/scripts/*.sh").AsConfig | nindent 2 }}

@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: subdomain-provisioner
+  namespace: myapp
+spec:
+  selector:
+    matchLabels:
+      app: subdomain-provisioner
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: subdomain-provisioner
+    spec:
+      serviceAccountName: myapp-cluster-admin
+      containers:
+      - name: subdomain-provisioner
+        image: "busybox"
+        workingDir: "/app"
+        command: ['/bin/sh', '-c', '/app/entrypoint.sh']
+        volumeMounts:
+        volumeMounts:
+        - name: internal-sidecar-cert-key-secret
+          mountPath: "/app/cert"
+          readOnly: true
+        - mountPath: /app
+          name: subdomain-provisioner-config-scripts
+        - mountPath: /app/subdomain-templates
+          name: subdomain-provisioner-config-helm-chart
+        - mountPath: /app/subdomain-templates/templates
+          name: subdomain-provisioner-config-helm-templates
+        env:
+          - name: K8S_HOSTNAME
+            value: {{ .Values.global.hostname }}
+      volumes:
+      - name: internal-sidecar-cert-key-secret
+        secret:
+          secretName: internal-tls-secret
+      - name: subdomain-provisioner-config-scripts
+        configMap:
+          name: subdomain-provisioner-config-scripts
+          defaultMode: 0744
+      - name: subdomain-provisioner-config-helm-templates
+        configMap:
+          name: subdomain-provisioner-config-helm-templates
+      - name: subdomain-provisioner-config-helm-chart
+        configMap:
+          name: subdomain-provisioner-config-helm-chart

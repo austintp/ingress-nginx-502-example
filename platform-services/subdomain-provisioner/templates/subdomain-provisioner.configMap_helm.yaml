@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subdomain-provisioner-config-helm-templates
+  namespace: myapp
+data:
+  {{- (.Files.Glob "files/helm/templates/*.yaml").AsConfig | nindent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subdomain-provisioner-config-helm-chart
+  namespace: myapp
+data:
+  {{- (.Files.Glob "files/helm/Chart.yaml").AsConfig | nindent 2 }}

@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: myapp-c
+  namespace: myapp
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/myapp-c"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: $1
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.global.hostname }}
+  rules:
+  - host: {{ .Values.global.hostname }}
+    http:
+      paths:
+      - path: /myapp-c(.*)
+        backend:
+          serviceName: myapp-c
+          servicePort: 443

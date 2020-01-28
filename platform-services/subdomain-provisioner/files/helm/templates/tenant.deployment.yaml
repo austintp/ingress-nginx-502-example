@@ -1,0 +1,84 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: myapp-{{ .Values.tenant }}
+  namespace: myapp-subdomain-{{ .Values.tenant }}
+  labels:
+    app: myapp-{{ .Values.tenant }}
+    component: myapp
+    tenant: "{{ .Values.tenant }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: myapp-{{ .Values.tenant }}
+        component: myapp
+        tenant: "{{ .Values.tenant }}"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: sidecar
+        image: nginx:1.17.0-alpine
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args: ["envsubst '\\$SERVICE_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+        lifecycle:
+          preStop:
+            exec:
+              # https://github.com/kubernetes/ingress-nginx/issues/3639
+              command: ["/bin/sh", "-c", "sleep 3 && /usr/sbin/nginx -s quit"]
+        env:
+        - name: SERVICE_PORT
+          value: "8080"
+        ports:
+        - containerPort: 443
+          name: default
+        volumeMounts:
+        - name: internal-sidecar-cert-key-secret
+          mountPath: "/app/cert"
+          readOnly: true
+        - mountPath: /etc/nginx/nginx.conf.template
+          name: shared-configmap
+          subPath: nginx.conf.template
+      - name: myapp
+        image: "tomcat:8.5-jre8"
+        ports:
+        - containerPort: 8080
+          name: default
+        lifecycle:
+          preStop:
+            exec:
+              # https://github.com/kubernetes/ingress-nginx/issues/3639
+              command: ["/bin/bash", "-c", "sleep 3 && catalina.sh stop"]
+        env:
+        - name: JAVA_OPTS
+          value: -Xmx64m
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          timeoutSeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 20
+          timeoutSeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 24
+      restartPolicy: Always
+      volumes:
+      - name: internal-sidecar-cert-key-secret
+        secret:
+          secretName: internal-tls-secret
+      - name: shared-configmap
+        configMap:
+          name: shared-config
