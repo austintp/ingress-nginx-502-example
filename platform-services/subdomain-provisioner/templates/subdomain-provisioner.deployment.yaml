@@ -21,9 +21,6 @@ spec:
         command: ['/bin/sh', '-c', '/app/entrypoint.sh']
         volumeMounts:
         volumeMounts:
-        - name: internal-sidecar-cert-key-secret
-          mountPath: "/app/cert"
-          readOnly: true
         - mountPath: /app
           name: subdomain-provisioner-config-scripts
         - mountPath: /app/subdomain-templates
@@ -34,9 +31,6 @@ spec:
           - name: K8S_HOSTNAME
             value: {{ .Values.global.hostname }}
       volumes:
-      - name: internal-sidecar-cert-key-secret
-        secret:
-          secretName: internal-tls-secret
       - name: subdomain-provisioner-config-scripts
         configMap:
           name: subdomain-provisioner-config-scripts

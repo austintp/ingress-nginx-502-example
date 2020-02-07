@@ -18,29 +18,6 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-      - name: sidecar
-        image: nginx:1.17.0-alpine
-        imagePullPolicy: Always
-        command: ["/bin/sh", "-c"]
-        args: ["envsubst '\\$SERVICE_PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
-        lifecycle:
-          preStop:
-            exec:
-              # https://github.com/kubernetes/ingress-nginx/issues/3639
-              command: ["/bin/sh", "-c", "sleep 3 && /usr/sbin/nginx -s quit"]
-        env:
-        - name: SERVICE_PORT
-          value: "8080"
-        ports:
-        - containerPort: 443
-          name: default
-        volumeMounts:
-        - name: internal-sidecar-cert-key-secret
-          mountPath: "/app/cert"
-          readOnly: true
-        - mountPath: /etc/nginx/nginx.conf.template
-          name: shared-configmap
-          subPath: nginx.conf.template
       - name: myapp
         image: "tomcat:8.5-jre8"
         lifecycle:
@@ -72,10 +49,3 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           failureThreshold: 3
-      volumes:
-      - name: internal-sidecar-cert-key-secret
-        secret:
-          secretName: internal-tls-secret
-      - name: shared-configmap
-        configMap:
-          name: shared-config

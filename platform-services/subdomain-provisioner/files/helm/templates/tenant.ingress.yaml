@@ -5,18 +5,12 @@ metadata:
   name: {{ .Values.tenant }}-ingress-subdomain
   namespace: myapp-subdomain-{{ .Values.tenant }}
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/session-cookie-path: "/subdomain"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_verify on;
-      proxy_ssl_session_reuse on;
-      proxy_ssl_name *.myapp.svc.cluster.local;
-      proxy_ssl_trusted_certificate /etc/nginx/ssl/myapp-internal-ca-root-public.crt;
 spec:
   tls:
   - hosts:
@@ -28,7 +22,7 @@ spec:
       - path: /subdomain(.*)
         backend:
           serviceName: myapp-{{ .Values.tenant }}
-          servicePort: 443
+          servicePort: 8080
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -36,17 +30,11 @@ metadata:
   name: {{ .Values.tenant }}-ingress-myapp
   namespace: myapp-subdomain-{{ .Values.tenant }}
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/session-cookie-path: "/"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_verify on;
-      proxy_ssl_session_reuse on;
-      proxy_ssl_name *.myapp.svc.cluster.local;
-      proxy_ssl_trusted_certificate /etc/nginx/ssl/myapp-internal-ca-root-public.crt;
 spec:
   tls:
   - hosts:
@@ -58,99 +46,4 @@ spec:
       - path: /
         backend:
           serviceName: myapp
-          servicePort: 443
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {{ .Values.tenant }}-ingress-myapp-b
-  namespace: myapp-subdomain-{{ .Values.tenant }}
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-path: "/myapp-b"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_verify on;
-      proxy_ssl_session_reuse on;
-      proxy_ssl_name *.myapp.svc.cluster.local;
-      proxy_ssl_trusted_certificate /etc/nginx/ssl/myapp-internal-ca-root-public.crt;
-spec:
-  tls:
-  - hosts:
-    - {{ .Values.tenant }}.{{ .Values.host }}
-  rules:
-  - host: {{ .Values.tenant }}.{{ .Values.host }}
-    http:
-      paths:
-      - path: /myapp-b(.*)
-        backend:
-          serviceName: myapp-b
-          servicePort: 443
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {{ .Values.tenant }}-ingress-myapp-c
-  namespace: myapp-subdomain-{{ .Values.tenant }}
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-path: "/myapp-c"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_verify on;
-      proxy_ssl_session_reuse on;
-      proxy_ssl_name *.myapp.svc.cluster.local;
-      proxy_ssl_trusted_certificate /etc/nginx/ssl/myapp-internal-ca-root-public.crt;
-spec:
-  tls:
-  - hosts:
-    - {{ .Values.tenant }}.{{ .Values.host }}
-  rules:
-  - host: {{ .Values.tenant }}.{{ .Values.host }}
-    http:
-      paths:
-      - path: /myapp-c(.*)
-        backend:
-          serviceName: myapp-c
-          servicePort: 443
----
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {{ .Values.tenant }}-ingress-myapp-d
-  namespace: myapp-subdomain-{{ .Values.tenant }}
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-path: "/myapp-d"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_verify on;
-      proxy_ssl_session_reuse on;
-      proxy_ssl_name *.myapp.svc.cluster.local;
-      proxy_ssl_trusted_certificate /etc/nginx/ssl/myapp-internal-ca-root-public.crt;
-spec:
-  tls:
-  - hosts:
-    - {{ .Values.tenant }}.{{ .Values.host }}
-  rules:
-  - host: {{ .Values.tenant }}.{{ .Values.host }}
-    http:
-      paths:
-      - path: /myapp-d(.*)
-        backend:
-          serviceName: myapp-d
-          servicePort: 443
----
+          servicePort: 8080

@@ -262,16 +262,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 10
-        # This is referenced by the platform-services Ingress resources.
-        # They specify the proxy_ssl_trusted_certificate property to 
-        # indicate what SSL certificates to trust.
-        volumeMounts:
-        - mountPath: /etc/nginx/ssl
-          name: proxy-trusted-certificate
-      volumes:
-      - name: proxy-trusted-certificate
-        configMap:
-          name: myapp-internal-ca-root-public-crt
 ---
 kind: Service
 apiVersion: v1
